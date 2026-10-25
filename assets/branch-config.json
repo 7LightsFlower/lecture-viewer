@@ -1,0 +1,7 @@
+{
+  "liveKey": "key_live_esp3wVAF1SVFe0zo7N2e2jlhwwgk4bru",
+  "testKey": "key_test_eyl1CMEE3LRza0Dp4R8Cmbdbvsmd9mrU",
+  "useTestInstance": false,
+  "logLevel": "INFO",
+  "enableLogging": false
+}

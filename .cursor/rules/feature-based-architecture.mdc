@@ -1,0 +1,60 @@
+---
+description: Organize code by feature under lib/features/; shared code in lib/core/
+alwaysApply: true
+---
+
+# Feature-based architecture
+
+Organize all new and moved Dart/Flutter code by **feature**, not by technical type at `lib/` root.
+
+## Top-level layout
+
+```text
+lib/
+  main.dart              # bootstrap only (runApp, ProviderScope if used)
+  app/                   # app shell: theme, router, global providers
+  core/                  # cross-feature only (no feature-specific logic)
+  features/
+    <feature_name>/      # one folder per user-facing capability
+```
+
+## Per-feature structure
+
+Each feature is self-contained. Use layers that fit the feature size; skip empty layers:
+
+```text
+lib/features/<feature_name>/
+  presentation/   # pages, widgets, Riverpod notifiers/providers
+  domain/         # entities, repository interfaces (optional for tiny features)
+  data/           # models, repository implementations, API/local sources
+```
+
+Folder names: `snake_case` (e.g. `lecture_viewer`, `translation_session`).
+
+## Where code belongs
+
+| Location | Put here |
+|----------|----------|
+| `lib/features/<feature>/` | UI, state, repos, models used by one feature |
+| `lib/core/` | extensions, failures, shared widgets, constants used by 2+ features |
+| `lib/app/` | `MaterialApp`, routes, theme, app-wide DI setup |
+| `lib/` root | **Only** `main.dart` — not `widgets/`, `services/`, `models/` |
+
+**Imports:** Features may depend on `core` and `app`. Features must **not** import another feature's `data/` or `presentation/` directly — move shared contracts to `core` or a thin shared module.
+
+## When adding or moving code
+
+- New screen or flow → folder under `lib/features/<name>/`
+- New file → correct layer (`presentation` / `domain` / `data`), not beside `main.dart`
+- Growing `main.dart` → extract to `app/` and feature folders
+- Tests mirror features: `test/features/<feature_name>/...`
+
+## Import examples
+
+```dart
+// Good
+import 'package:lecture_viewer_v3/features/lectures/presentation/lecture_list_page.dart';
+
+// Bad — feature UI at lib root
+import 'package:lecture_viewer_v3/lecture_list_page.dart';
+```

@@ -1,0 +1,66 @@
+---
+description: After coding, review the diff; simplify and fix perf issues before finishing
+alwaysApply: true
+---
+
+# Post-coding review
+
+After implementing or editing code, run this pass **before** marking the task complete.
+
+## 1. Self-review
+
+Read the diff you just wrote with fresh eyes:
+
+- Correctness, edge cases, error handling
+- Naming and consistency with surrounding patterns
+- Dead code, duplication, or unnecessary complexity
+
+## 2. Simplify for maintainability
+
+If you can simplify **without changing behavior**, do it:
+
+- Prefer clear names and fewer branches over clever abstractions
+- Extract only when it reduces duplication or clarifies intent
+- Delete redundant helpers, wrappers, and comments that restate the code
+- Match project conventions (e.g. `lib/features/<feature>/` layout, existing Riverpod patterns)
+
+Do not expand scope with drive-by refactors outside your change.
+
+## 3. Performance and resource use
+
+Fix issues you spot in the **new or changed code**:
+
+**General**
+
+- Hot loops, redundant allocations
+- Missing cleanup (`dispose`, cancel subscriptions, close streams)
+- Sync or heavy work on the UI thread
+
+**Flutter / Riverpod**
+
+- Unnecessary rebuilds: broad `ref.watch`, missing `select`, heavy logic in `build()`
+- Missing `const` where widgets are stable
+- `setState` or notifier updates that repaint more than needed
+- Lists that can grow without lazy builders (`ListView.builder`, etc.)
+
+```dart
+// Avoid: whole state triggers rebuild
+final session = ref.watch(translationSessionProvider);
+
+// Prefer: rebuild only when the field you need changes
+final isRecording = ref.watch(
+  translationSessionProvider.select((s) => s.isRecording),
+);
+```
+
+Only optimize code you touched or that your change clearly worsens — no unrelated perf refactors.
+
+## 4. Act vs. defer
+
+- **Fix now**: clear bugs, easy simplifications, obvious perf wins in your diff
+- **Tell the user**: larger refactors or trade-offs outside the current task scope
+
+Do not claim the task is done until this review pass is complete.
+
+## Keep things simple
+If you can make things simpler without changing the goal, do it.

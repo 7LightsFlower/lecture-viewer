@@ -1,0 +1,40 @@
+---
+description: When planning, prefer the simplest design that is easy to build and maintain
+alwaysApply: true
+---
+
+# Simple, maintainable planning
+
+When drafting plans, designs, or implementation steps, **default to the simplest option** that meets the requirement. Favor clarity and long-term maintenance over cleverness or future-proofing.
+
+## Planning principles
+
+- **Solve the stated problem only** — no speculative features, abstractions, or “we might need this later” unless the user asked for them.
+- **Fewer parts** — prefer one clear flow over layers, indirection, or extra packages you do not need yet.
+- **Reuse what exists** — extend current patterns, widgets, and providers before introducing new frameworks or folder structures.
+- **Smallest viable change** — break work into steps that each deliver value; avoid big-bang refactors in a single plan.
+- **Readable over clever** — choose names, file placement, and APIs that a teammate can follow without a diagram.
+
+## Before finalizing a plan, check
+
+- Can any proposed layer, interface, or generic helper be removed without losing the goal?
+- Is every new file, dependency, and config entry justified by a **current** requirement?
+- Will the plan match the project’s feature-based layout without extra nesting or duplicate modules?
+- Could a junior developer implement step 1 without guessing hidden rules?
+
+If the answer to the first two is “yes, we could remove it,” simplify the plan first.
+
+## What to avoid in plans
+
+- Parallel architectures (e.g. second state-management approach) without a strong reason
+- Premature `domain/` / `data/` splits for one-screen features
+- Config flags, feature toggles, or plugin stacks added “just in case”
+- Plans that list many files when one or two would suffice
+
+## When complexity is warranted
+
+Call it out explicitly: name the requirement (performance, security, multi-team boundary) and why the simpler approach fails. Keep the complex slice as small as possible.
+
+## Output style
+
+Plans should be **short, ordered steps** with concrete paths and behavior — not long essays. Prefer “add X in `lib/features/foo/presentation/`” over abstract component inventories.
