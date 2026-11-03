@@ -14,6 +14,11 @@ class QrScanScreen extends StatefulWidget {
 class _QrScanScreenState extends State<QrScanScreen> {
   final MobileScannerController _controller = MobileScannerController();
   bool _handling = false;
+  String? _rejectedValue;
+  DateTime? _rejectedLastSeenAt;
+
+  /// How long a rejected code must stay out of frame before it is handled again.
+  static const Duration _rejectedCooldown = Duration(seconds: 3);
 
   @override
   void dispose() {
@@ -23,29 +28,43 @@ class _QrScanScreenState extends State<QrScanScreen> {
 
   Future<void> _onDetect(BarcodeCapture capture) async {
     if (_handling) return;
-    final raw = capture.barcodes.firstOrNull?.rawValue;
+    final raw = capture.barcodes.firstOrNull?.rawValue?.trim();
     if (raw == null) return;
-    final uri = Uri.tryParse(raw.trim());
+    if (_isStillRejected(raw)) return;
+    final uri = Uri.tryParse(raw);
     if (uri == null || !isLectureViewerAppLink(uri)) {
-      _showSnack('Invalid lecture link');
+      _reject(raw, 'Invalid lecture link');
       return;
     }
     _handling = true;
-    final ok = await openLectureSessionFromAppLink(context, raw.trim());
+    final ok = await openLectureSessionFromAppLink(context, raw);
     if (!mounted) return;
     if (ok) {
       Navigator.of(context).pop();
     } else {
+      _reject(raw, 'Invalid session link');
       _handling = false;
       await _controller.start();
-      _showSnack('Invalid session link');
     }
   }
 
-  void _showSnack(String message) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+  /// The scanner fires on every frame, so a rejected code that stays in view
+  /// keeps refreshing its cooldown instead of notifying again.
+  bool _isStillRejected(String value) {
+    if (value != _rejectedValue) return false;
+    final now = DateTime.now();
+    final stillRejected =
+        now.difference(_rejectedLastSeenAt!) < _rejectedCooldown;
+    _rejectedLastSeenAt = now;
+    return stillRejected;
+  }
+
+  void _reject(String value, String message) {
+    _rejectedValue = value;
+    _rejectedLastSeenAt = DateTime.now();
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
