@@ -35,7 +35,10 @@ class _QrScanScreenState extends State<QrScanScreen> {
     if (_isStillRejected(raw)) return;
     final uri = Uri.tryParse(raw);
     if (uri == null || !isLectureViewerAppLink(uri)) {
-      _reject(raw, 'Invalid lecture link');
+      _reject(
+        raw,
+        'This lecture link is invalid. Please check the link and try again.',
+      );
       return;
     }
     _handling = true;
@@ -44,7 +47,10 @@ class _QrScanScreenState extends State<QrScanScreen> {
     if (ok) {
       Navigator.of(context).pop();
     } else {
-      _reject(raw, 'Invalid session link');
+      _reject(
+        raw,
+        'This session link is invalid. Please check the link and try again.',
+      );
       _handling = false;
       await _controller.start();
     }
