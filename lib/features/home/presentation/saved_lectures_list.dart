@@ -66,7 +66,11 @@ class _SavedLecturesListState extends ConsumerState<SavedLecturesList> {
       final invalidLink = meetingNameFromLinkRecord(lecture.linkRecord) == null;
       if (invalidLink) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Invalid session link')),
+          const SnackBar(
+            content: Text(
+              'This session link is invalid. Please check the link and try again.',
+            ),
+          ),
         );
       }
       return;
