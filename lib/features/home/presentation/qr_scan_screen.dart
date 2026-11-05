@@ -20,6 +20,8 @@ class _QrScanScreenState extends State<QrScanScreen> {
   /// How long a rejected code must stay out of frame before it is handled again.
   static const Duration _rejectedCooldown = Duration(seconds: 3);
 
+  static const Duration _rejectedToastDuration = Duration(seconds: 2);
+
   @override
   void dispose() {
     _controller.dispose();
@@ -64,7 +66,9 @@ class _QrScanScreenState extends State<QrScanScreen> {
     _rejectedLastSeenAt = DateTime.now();
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message)));
+      ..showSnackBar(
+        SnackBar(content: Text(message), duration: _rejectedToastDuration),
+      );
   }
 
   @override
