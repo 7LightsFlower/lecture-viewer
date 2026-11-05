@@ -20,7 +20,7 @@ class _QrScanScreenState extends State<QrScanScreen> {
   /// How long a rejected code must stay out of frame before it is handled again.
   static const Duration _rejectedCooldown = Duration(seconds: 3);
 
-  static const Duration _rejectedToastDuration = Duration(milliseconds: 2500);
+  static const Duration _rejectedToastDuration = Duration(seconds: 2);
 
   @override
   void dispose() {
