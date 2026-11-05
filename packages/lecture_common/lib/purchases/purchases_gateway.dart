@@ -77,6 +77,11 @@ class PurchasesGateway {
     return Uri.parse('https://play.google.com/store/account/subscriptions');
   }
 
+  /// ID hiện tại của customer. Đọc mỗi lần dùng vì [logIn] làm nó đổi.
+  Future<String> appUserId() => Purchases.appUserID;
+
+  Future<bool> isAnonymous() => Purchases.isAnonymous;
+
   Future<ProStatus> logIn(String code) async {
     final result = await Purchases.logIn(code);
     return ProStatus.fromCustomerInfo(
