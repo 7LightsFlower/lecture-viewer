@@ -10,13 +10,16 @@ const kLectureTranslatorHttpOrigin = ApiEnvironmentOrigins.kitPublicDirect;
 
 /// HTTPS origin for shorten and cached-text requests.
 ///
-/// On [ApiEnvironment.customOnDeeplink], prefers the host from [linkRecord].
-/// Otherwise (and on fallback) uses [kLectureTranslatorHttpOrigin].
+/// On [ApiEnvironment.customOnDeeplink] and [ApiEnvironment.kitPublicDirect],
+/// prefers the host from [linkRecord] (e.g. `lt2srv-backup.iar.kit.edu`
+/// serves `/webapi/shorten` itself). Otherwise (and on fallback) uses
+/// [kLectureTranslatorHttpOrigin].
 String httpsOriginForLectureHttp({
   required ApiEnvironment environment,
   required String linkRecord,
 }) {
-  if (environment == ApiEnvironment.customOnDeeplink) {
+  if (environment == ApiEnvironment.customOnDeeplink ||
+      environment == ApiEnvironment.kitPublicDirect) {
     final uri = Uri.parse(resolveSessionUrl(linkRecord));
     if (uri.host.isNotEmpty) {
       return uri.origin;

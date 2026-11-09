@@ -10,6 +10,18 @@ void main() {
     'https://user:secret@lt2srv.example/ltapi/stream/data?name=Data/1/2',
   );
 
+  test('ttsPcmRequestParts moves credentials into a Basic header', () {
+    final parts = ttsPcmRequestParts(uri);
+    expect(parts.uri.toString(),
+        'https://lt2srv.example/ltapi/stream/data?name=Data/1/2');
+    expect(parts.headers['authorization'], 'Basic dXNlcjpzZWNyZXQ=');
+
+    final plain = Uri.parse('https://lt2srv.example/webapi/stream/data?name=x');
+    final noCreds = ttsPcmRequestParts(plain);
+    expect(noCreds.uri, plain);
+    expect(noCreds.headers, isEmpty);
+  });
+
   test('succeeds on first 200 response', () async {
     var calls = 0;
     final client = MockClient((request) async {

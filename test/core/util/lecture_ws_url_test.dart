@@ -24,6 +24,16 @@ void main() {
   });
 
   group('httpsOriginForLectureHttp', () {
+    test('kitPublicDirect uses host from link_record', () {
+      expect(
+        httpsOriginForLectureHttp(
+          environment: ApiEnvironment.kitPublicDirect,
+          linkRecord: 'lt2srv-backup.iar.kit.edu/mobile/session/TestLongSession',
+        ),
+        'https://lt2srv-backup.iar.kit.edu',
+      );
+    });
+
     test('customOnDeeplink uses host from link_record', () {
       expect(
         httpsOriginForLectureHttp(
