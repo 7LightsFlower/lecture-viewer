@@ -153,7 +153,7 @@ class _LectureSnapshotScreenState extends ConsumerState<LectureSnapshotScreen> {
               children: [
                 Expanded(
                   child: DropdownButtonFormField<String>(
-                    value: languages.contains(_selectedLanguage)
+                    initialValue: languages.contains(_selectedLanguage)
                         ? _selectedLanguage
                         : (languages.isNotEmpty ? languages.first : null),
                     decoration: const InputDecoration(
@@ -178,7 +178,7 @@ class _LectureSnapshotScreenState extends ConsumerState<LectureSnapshotScreen> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: DropdownButtonFormField<String>(
-                    value: moduleOptions.any(
+                    initialValue: moduleOptions.any(
                       (o) => o.rawSender == _selectedRawSender,
                     )
                         ? _selectedRawSender

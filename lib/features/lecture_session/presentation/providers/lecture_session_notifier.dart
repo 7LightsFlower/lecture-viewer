@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lecture_common/lecture_common.dart';
 
 import 'package:lecture_viewer_v3/core/bootstrap/init_lecture_tts_audio_service.dart';
-import 'package:lecture_viewer_v3/core/constants/api_environment.dart';
 import 'package:lecture_viewer_v3/core/providers/api_environment_notifier.dart';
 import 'package:lecture_viewer_v3/core/util/lecture_ws_url.dart';
 import 'package:lecture_viewer_v3/features/lecture_session/data/media/lecture_tts_audio_handler.dart';

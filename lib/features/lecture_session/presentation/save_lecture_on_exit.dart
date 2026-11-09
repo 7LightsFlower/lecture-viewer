@@ -20,6 +20,8 @@ Future<bool> handleLectureSessionExit(
     return true;
   }
 
+  final locale = Localizations.localeOf(context);
+
   final prompt = await showDialog<_SavePromptResult>(
     context: context,
     builder: (ctx) => AlertDialog(
@@ -49,7 +51,6 @@ Future<bool> handleLectureSessionExit(
     return true;
   }
 
-  final locale = Localizations.localeOf(context);
   final existingNames =
       ref.read(savedLecturesProvider).map((e) => e.displayName);
   final generated = defaultSavedLectureDisplayName(

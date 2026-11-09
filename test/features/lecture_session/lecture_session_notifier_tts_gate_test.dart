@@ -91,7 +91,7 @@ void main() {
           lectureSessionProvider.overrideWith(_GateTestNotifier.new),
         ],
       );
-      container.listen(lectureSessionProvider(_scope), (_, __) {});
+      container.listen(lectureSessionProvider(_scope), (_, _) {});
       notifier = container.read(lectureSessionProvider(_scope).notifier)
           as _GateTestNotifier;
     });
