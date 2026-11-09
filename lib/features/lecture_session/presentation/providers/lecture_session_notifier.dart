@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lecture_common/lecture_common.dart';
 
 import 'package:lecture_viewer_v3/core/bootstrap/init_lecture_tts_audio_service.dart';
+import 'package:lecture_viewer_v3/core/constants/api_environment.dart';
 import 'package:lecture_viewer_v3/core/providers/api_environment_notifier.dart';
 import 'package:lecture_viewer_v3/core/util/lecture_ws_url.dart';
 import 'package:lecture_viewer_v3/features/lecture_session/data/media/lecture_tts_audio_handler.dart';
@@ -15,6 +16,8 @@ import 'package:lecture_viewer_v3/features/lecture_session/domain/tts/lecture_tt
 import 'package:lecture_viewer_v3/features/lecture_session/domain/tts/tts_collapsed_slider_gate.dart';
 import 'package:lecture_viewer_v3/features/lecture_session/domain/tts/tts_language_change.dart';
 import 'package:lecture_viewer_v3/features/lecture_session/domain/tts/tts_media_seek.dart';
+import 'package:lecture_viewer_v3/features/lecture_session/data/lecture_session_transport.dart';
+import 'package:lecture_viewer_v3/features/lecture_session/data/public_lt/public_lt_session_client.dart';
 import 'package:lecture_viewer_v3/features/lecture_session/data/websocket/lecture_session_websocket_client.dart';
 import 'package:lecture_viewer_v3/features/lecture_session/data/websocket/lecture_ws_phase.dart';
 import 'package:lecture_viewer_v3/core/lecture_snapshot/lecture_snapshot_provider.dart';
@@ -24,6 +27,10 @@ import 'package:lecture_viewer_v3/features/lecture_session/domain/transcript/lec
 import 'package:lecture_viewer_v3/features/lecture_session/presentation/lecture_session_scope.dart';
 import 'package:lecture_viewer_v3/features/lecture_session/presentation/lecture_session_state.dart';
 
+/// Direct (KIT public) mode: replay earlier output when first joining a
+/// session, so late joiners see the whole lecture. Retries skip it.
+const kPublicLtLoadHistoryOnJoin = true;
+
 final lectureSessionProvider = NotifierProvider.autoDispose
     .family<LectureSessionNotifier, LectureSessionState, LectureSessionScope>(
   LectureSessionNotifier.new,
@@ -31,7 +38,7 @@ final lectureSessionProvider = NotifierProvider.autoDispose
 
 class LectureSessionNotifier extends AutoDisposeFamilyNotifier<LectureSessionState,
     LectureSessionScope> implements LectureTtsRemoteDelegate {
-  LectureSessionWebSocketClient? _client;
+  LectureSessionTransport? _client;
   StreamSubscription<LectureWsPhase>? _phaseSub;
   LectureTtsController? _tts;
   bool _ttsMediaAttached = false;
@@ -129,6 +136,39 @@ class LectureSessionNotifier extends AutoDisposeFamilyNotifier<LectureSessionSta
     bool noHistory = kLectureWsNoHistoryOnInitialConnect,
   }) async {
     final env = ref.read(apiEnvironmentProvider);
+    if (env == ApiEnvironment.kitPublicDirect) {
+      final shortenOrigin = httpsOriginForLectureHttp(
+        environment: env,
+        linkRecord: arg.linkRecord,
+      );
+      final loadHistory = kPublicLtLoadHistoryOnJoin
+          ? state.transcript.buckets.isEmpty
+          : !noHistory;
+      lectureSessionDebugConnect(
+        sessionId: sessionId,
+        wsUrl: '$shortenOrigin/webapi (direct, history=$loadHistory)',
+      );
+      _client = PublicLtSessionClient(
+        meetingName: sessionId,
+        shortenOrigin: shortenOrigin,
+        loadHistory: loadHistory,
+        onText: _onRawMessage,
+      );
+    } else {
+      _client = _backendClient(env, sessionId, noHistory: noHistory);
+    }
+    _phaseSub = _client!.phase.listen((phase) {
+      lectureSessionDebugPhase(sessionId: sessionId, phase: phase);
+      state = state.copyWith(wsPhase: phase, clearError: true);
+    });
+    await _client!.start();
+  }
+
+  LectureSessionTransport _backendClient(
+    ApiEnvironment env,
+    String sessionId, {
+    required bool noHistory,
+  }) {
     final origin = httpsOriginForLectureWs(
       environment: env,
       linkRecord: arg.linkRecord,
@@ -140,15 +180,10 @@ class LectureSessionNotifier extends AutoDisposeFamilyNotifier<LectureSessionSta
     ).toString();
 
     lectureSessionDebugConnect(sessionId: sessionId, wsUrl: wsUrl);
-    _client = LectureSessionWebSocketClient(
+    return LectureSessionWebSocketClient(
       wsUrl: wsUrl,
       onText: _onRawMessage,
     );
-    _phaseSub = _client!.phase.listen((phase) {
-      lectureSessionDebugPhase(sessionId: sessionId, phase: phase);
-      state = state.copyWith(wsPhase: phase, clearError: true);
-    });
-    await _client!.start();
   }
 
   void _onRawMessage(String raw) {

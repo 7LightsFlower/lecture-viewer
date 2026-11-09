@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:lecture_viewer_v3/core/api/lecture_shorten_client.dart';
+import 'package:lecture_viewer_v3/core/constants/api_environment.dart';
 import 'package:lecture_viewer_v3/core/lecture_snapshot/lecture_snapshot_provider.dart';
 import 'package:lecture_viewer_v3/core/providers/api_environment_notifier.dart';
 import 'package:lecture_viewer_v3/core/saved_lectures/saved_lectures_provider.dart';
@@ -157,4 +158,52 @@ Future<bool> openLectureSessionFromLinkRecord(
     return true;
   }
   return false;
+}
+
+/// Turns user-supplied text into a `link_record`:
+/// - app link `https://lectureviewer.app.link/...?link_record=...`
+/// - link record with or without scheme (`lt2srv.iar.kit.edu/mobile/session/x`)
+/// - public shorten link (`.../webapi/shorten/x`) or a bare meeting name `x`,
+///   both mapped to the production backend's session path.
+///
+/// Returns null when nothing usable is found.
+String? linkRecordFromUserInput(String input) {
+  final text = input.trim();
+  if (text.isEmpty) return null;
+
+  final uri = Uri.tryParse(text);
+  if (uri != null && isLectureViewerAppLink(uri)) {
+    return linkRecordFromAppLinkUri(uri);
+  }
+
+  String forName(String name) =>
+      '${Uri.parse(ApiEnvironmentOrigins.production).host}'
+      '/mobile/session/${Uri.encodeComponent(name)}';
+
+  if (!text.contains('/')) {
+    return RegExp(r'^[\w.\-]+$').hasMatch(text) ? forName(text) : null;
+  }
+
+  final withoutScheme = text.replaceFirst(RegExp(r'^https?://'), '');
+  final shorten = RegExp(r'/webapi/shorten/([^/?#]+)').firstMatch(withoutScheme);
+  if (shorten != null) {
+    return forName(Uri.decodeComponent(shorten.group(1)!));
+  }
+  final record = withoutScheme.split(RegExp('[?#]')).first;
+  return meetingNameFromLinkRecord(record) == null ? null : record;
+}
+
+/// Opens a session from pasted text (see [linkRecordFromUserInput]).
+Future<bool> openLectureSessionFromUserInput(
+  BuildContext context,
+  String input,
+) async {
+  final trimmed = input.trim();
+  final uri = Uri.tryParse(trimmed);
+  if (uri != null && isLectureViewerAppLink(uri)) {
+    return openLectureSessionFromAppLink(context, trimmed);
+  }
+  final linkRecord = linkRecordFromUserInput(trimmed);
+  if (linkRecord == null) return false;
+  return openLectureSessionFromLinkRecord(context, linkRecord);
 }

@@ -9,8 +9,13 @@ import 'lecture_snapshot_repository.dart';
 Future<void> Function(String linkRecord)?
     deleteLectureSnapshotForLinkRecordOverride;
 
+/// Web has no SQLite: snapshots live in memory for the lifetime of the tab.
+final LectureSnapshotRepository _webSnapshotRepository =
+    LectureSnapshotRepository.inMemory();
+
 final lectureSnapshotRepositoryProvider =
     FutureProvider<LectureSnapshotRepository>((ref) async {
+  if (kIsWeb) return _webSnapshotRepository;
   final db = await openLectureSnapshotDatabase();
   return LectureSnapshotRepository(db);
 });
@@ -26,6 +31,10 @@ Future<void> deleteLectureSnapshotForLinkRecord(String linkRecord) async {
   final override = deleteLectureSnapshotForLinkRecordOverride;
   if (override != null) {
     await override(linkRecord);
+    return;
+  }
+  if (kIsWeb) {
+    await _webSnapshotRepository.delete(linkRecord);
     return;
   }
   final db = await openLectureSnapshotDatabase();

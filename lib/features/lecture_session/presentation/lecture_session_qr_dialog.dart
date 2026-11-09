@@ -79,15 +79,26 @@ class _ShareQrButtonState extends State<_ShareQrButton> {
     File? file;
     try {
       final bytes = await _renderQrPng(widget.joinUrl);
-      final dir = await getTemporaryDirectory();
-      file = File('${dir.path}/lecture-join-qr.png');
-      await file.writeAsBytes(bytes, flush: true);
+      final XFile shareFile;
+      if (kIsWeb) {
+        // Web has no file system: share the PNG bytes directly.
+        shareFile = XFile.fromData(
+          bytes,
+          name: 'lecture-join-qr.png',
+          mimeType: 'image/png',
+        );
+      } else {
+        final dir = await getTemporaryDirectory();
+        file = File('${dir.path}/lecture-join-qr.png');
+        await file.writeAsBytes(bytes, flush: true);
+        shareFile = XFile(file.path, mimeType: 'image/png');
+      }
       // share() only returns once the system sheet closes; don't leave the
       // spinner running behind it.
       hideLoading();
       await SharePlus.instance.share(
         ShareParams(
-          files: [XFile(file.path, mimeType: 'image/png')],
+          files: [shareFile],
           sharePositionOrigin: origin,
         ),
       );

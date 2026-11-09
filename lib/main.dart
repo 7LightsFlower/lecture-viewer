@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_branch_sdk/flutter_branch_sdk.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -17,7 +18,8 @@ Future<void> main() async {
   await configureLectureTtsAudioSession();
   await initLectureTtsAudioService();
   await initializeSoloudEngine();
-  await FlutterBranchSdk.init();
+  // Branch needs its own JS SDK in a browser; deep links come via ?link= there.
+  if (!kIsWeb) await FlutterBranchSdk.init();
   final prefs = await SharedPreferences.getInstance();
   runApp(
     ProviderScope(

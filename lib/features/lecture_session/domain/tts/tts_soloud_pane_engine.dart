@@ -9,6 +9,7 @@ import 'package:http/http.dart' as http;
 import 'package:lecture_common/lecture_common.dart';
 
 import 'package:lecture_viewer_v3/core/bootstrap/configure_lecture_tts_audio_session.dart';
+import 'package:lecture_viewer_v3/core/bootstrap/soloud_engine.dart';
 import 'package:lecture_viewer_v3/features/lecture_session/domain/lecture_session_debug.dart';
 
 Uint8List _decodeB64BodyIsolate(String body) {
@@ -43,7 +44,7 @@ final class TtsSoloudPaneEngine {
   Timer? _positionTimer;
 
   TtsPaneSnapshot _snapshot() {
-    final playing = SoLoud.instance.isInitialized &&
+    final playing = isSoloudReady() &&
         _handle != null &&
         !SoLoud.instance.getPause(_handle!);
     return TtsPaneSnapshot(
@@ -131,6 +132,11 @@ final class TtsSoloudPaneEngine {
     }
 
     if (epoch != _clearEpoch || _disposed) return;
+
+    if (!isSoloudReady()) {
+      lectureSessionDebugTtsFetch(url: url, outcome: 'no_audio_engine');
+      return;
+    }
 
     final samples = pcm.lengthInBytes ~/ 2;
     final seconds = samples / 16000.0;

@@ -7,7 +7,9 @@ import 'package:lecture_viewer_v3/features/settings/presentation/settings_info_i
 
 const String _kApiEnvironmentInfo =
     'Choose which backend the app uses for future API requests. '
-    'No network calls use this setting in the current release.';
+    '"KIT public (direct)" skips the app backend and reads sessions '
+    'straight from the public KIT Lecture Translator; text corrections '
+    'made through the backend are not shown in that mode.';
 
 class ApiEnvironmentSelector extends ConsumerWidget {
   const ApiEnvironmentSelector({super.key});

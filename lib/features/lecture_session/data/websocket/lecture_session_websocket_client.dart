@@ -5,11 +5,12 @@ import 'package:lecture_viewer_v3/core/util/lecture_ws_url.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 import 'package:lecture_common/lecture_common.dart';
+import 'package:lecture_viewer_v3/features/lecture_session/data/lecture_session_transport.dart';
 
 import 'lecture_ws_phase.dart';
 
 /// Receive-only WebSocket client for lecture session viewer.
-final class LectureSessionWebSocketClient {
+final class LectureSessionWebSocketClient implements LectureSessionTransport {
   LectureSessionWebSocketClient({
     required String wsUrl,
     required void Function(String text) onText,
@@ -30,14 +31,17 @@ final class LectureSessionWebSocketClient {
   WebSocketChannel? _channel;
   StreamSubscription<dynamic>? _streamSubscription;
 
+  @override
   Stream<LectureWsPhase> get phase => _phaseController.stream;
 
+  @override
   Future<void> start() async {
     _stopRequested = false;
     _stoppedPhaseEmitted = false;
     unawaited(_runReconnectLoop());
   }
 
+  @override
   Future<void> stop() async {
     _stopRequested = true;
     await _streamSubscription?.cancel();

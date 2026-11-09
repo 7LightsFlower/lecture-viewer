@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show kDebugMode, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_branch_sdk/flutter_branch_sdk.dart';
 
@@ -24,10 +25,33 @@ class _BranchSessionListenerState extends State<BranchSessionListener> {
   @override
   void initState() {
     super.initState();
+    if (kIsWeb) {
+      // No Branch in the browser: open `?link=<app link | link_record | name>`
+      // from the page URL instead.
+      WidgetsBinding.instance.addPostFrameCallback((_) => _openFromPageUrl());
+      return;
+    }
     _subscription = FlutterBranchSdk.listSession().listen(
       _onSession,
       onError: (_) {},
     );
+  }
+
+  Future<void> _openFromPageUrl([int attempt = 0]) async {
+    final params = Uri.base.queryParameters;
+    final raw = params['link'] ?? params['link_record'];
+    if (raw == null || raw.trim().isEmpty) return;
+    final nav = appNavigatorKey.currentState;
+    if (nav == null) {
+      // MaterialApp may not have built its navigator on the first frame yet.
+      if (attempt < 20 && mounted) {
+        await Future<void>.delayed(const Duration(milliseconds: 100));
+        if (mounted) await _openFromPageUrl(attempt + 1);
+      }
+      return;
+    }
+    final ok = await openLectureSessionFromUserInput(nav.context, raw);
+    if (!ok && kDebugMode) debugPrint('[web] could not open link from URL: $raw');
   }
 
   @override

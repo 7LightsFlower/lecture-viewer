@@ -13,6 +13,10 @@ void main() {
       expect(apiEnvironmentFromPrefs('production'), ApiEnvironment.production);
       expect(apiEnvironmentFromPrefs('testing'), ApiEnvironment.testing);
       expect(
+        apiEnvironmentFromPrefs('kitPublicDirect'),
+        ApiEnvironment.kitPublicDirect,
+      );
+      expect(
         apiEnvironmentFromPrefs('customOnDeeplink'),
         ApiEnvironment.customOnDeeplink,
       );

@@ -1,5 +1,6 @@
 import 'dart:collection';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -214,7 +215,8 @@ class _LectureShareSheetState extends State<_LectureShareSheet> {
 
     try {
       final now = DateTime.now();
-      final dir = await getTemporaryDirectory();
+      // Web has no file system: share in-memory bytes instead of temp files.
+      final dir = kIsWeb ? null : await getTemporaryDirectory();
       final files = <XFile>[];
 
       for (final language in widget.input.activeLanguages) {
@@ -223,8 +225,18 @@ class _LectureShareSheetState extends State<_LectureShareSheet> {
         final pdfBytes = _pdfCache[language];
         if (pdfBytes == null) continue;
 
-        final path =
-            '${dir.path}/${meetingSharePdfFileNameForLanguage(now, language)}';
+        final fileName = meetingSharePdfFileNameForLanguage(now, language);
+        if (dir == null) {
+          files.add(
+            XFile.fromData(
+              pdfBytes,
+              name: fileName,
+              mimeType: 'application/pdf',
+            ),
+          );
+          continue;
+        }
+        final path = '${dir.path}/$fileName';
         await File(path).writeAsBytes(pdfBytes, flush: true);
         tempPaths.add(path);
         files.add(XFile(path));

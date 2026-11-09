@@ -3,13 +3,27 @@ import 'package:sqflite/sqflite.dart';
 import 'lecture_snapshot_record.dart';
 
 class LectureSnapshotRepository {
-  LectureSnapshotRepository(this._db);
+  LectureSnapshotRepository(Database db)
+      : _db = db,
+        _memory = null;
 
-  final Database _db;
+  /// Keeps rows in memory only (used on web, where SQLite is unavailable).
+  LectureSnapshotRepository.inMemory()
+      : _db = null,
+        _memory = <String, Map<String, Object?>>{};
+
+  final Database? _db;
+  final Map<String, Map<String, Object?>>? _memory;
   static const _table = 'lecture_snapshots';
 
   Future<void> upsert(LectureSnapshotRecord record) async {
-    await _db.insert(
+    final memory = _memory;
+    if (memory != null) {
+      final row = Map<String, Object?>.from(record.toRow());
+      memory[row['link_record']! as String] = row;
+      return;
+    }
+    await _db!.insert(
       _table,
       record.toRow(),
       conflictAlgorithm: ConflictAlgorithm.replace,
@@ -17,7 +31,12 @@ class LectureSnapshotRepository {
   }
 
   Future<LectureSnapshotRecord?> get(String linkRecord) async {
-    final rows = await _db.query(
+    final memory = _memory;
+    if (memory != null) {
+      final row = memory[linkRecord];
+      return row == null ? null : LectureSnapshotRecord.fromRow(row);
+    }
+    final rows = await _db!.query(
       _table,
       where: 'link_record = ?',
       whereArgs: [linkRecord],
@@ -28,7 +47,9 @@ class LectureSnapshotRepository {
   }
 
   Future<bool> exists(String linkRecord) async {
-    final rows = await _db.query(
+    final memory = _memory;
+    if (memory != null) return memory.containsKey(linkRecord);
+    final rows = await _db!.query(
       _table,
       columns: ['link_record'],
       where: 'link_record = ?',
@@ -39,7 +60,12 @@ class LectureSnapshotRepository {
   }
 
   Future<void> delete(String linkRecord) async {
-    await _db.delete(
+    final memory = _memory;
+    if (memory != null) {
+      memory.remove(linkRecord);
+      return;
+    }
+    await _db!.delete(
       _table,
       where: 'link_record = ?',
       whereArgs: [linkRecord],

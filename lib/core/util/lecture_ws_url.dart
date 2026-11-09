@@ -6,7 +6,7 @@ import 'package:lecture_viewer_v3/core/util/lecture_app_link.dart';
 const kLectureWsNoHistoryOnInitialConnect = true;
 
 /// Default HTTPS origin for shorten / cached-text HTTP APIs.
-const kLectureTranslatorHttpOrigin = 'https://lecture-translator.kit.edu';
+const kLectureTranslatorHttpOrigin = ApiEnvironmentOrigins.kitPublicDirect;
 
 /// HTTPS origin for shorten and cached-text requests.
 ///
