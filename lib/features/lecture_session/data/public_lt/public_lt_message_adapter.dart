@@ -154,13 +154,15 @@ class PublicLtMessageAdapter {
     );
   }
 
-  /// Maps the TTS chunk reference in `b64_enc_pcm_s16le` to a public URL.
-  /// LT sends `Data/<session>/<n>`; the backend rewrites it to
-  /// `/ltapi/stream/data?name=...` (credentialed). We use `/webapi`.
+  /// Maps `b64_enc_pcm_s16le` to something the TTS player can fetch.
+  /// A reference (`Data/<session>/<n>`, `/ltapi/stream/data?name=...`)
+  /// becomes its public `/webapi` URL, without login (like KIT's page and
+  /// LT_ClientApp). Inline base64 PCM becomes a `data:` URL.
   String? publicTtsUrl(String? ref) {
+    ref = ref?.trim();
     if (ref == null || ref.isEmpty) return null;
     final base = apiOrigin.replaceAll(RegExp(r'/+$'), '');
-    if (ref.startsWith('Data/')) {
+    if (ref.startsWith('Data/') && ref.length < 300) {
       return '$base/webapi/stream/data?name=$ref';
     }
     if (ref.startsWith('/ltapi/')) {
@@ -171,7 +173,11 @@ class PublicLtMessageAdapter {
       final uri = Uri.parse(ref.replaceFirst('/ltapi/', '/webapi/'));
       return uri.replace(userInfo: '').toString();
     }
-    return null; // Inline base64 PCM: the viewer only plays URLs.
+    // Inline base64 PCM (base64 has no ? . : & _ - characters).
+    if (!RegExp(r'[?.:&_\-\s]').hasMatch(ref)) {
+      return 'data:audio/pcm;base64,$ref';
+    }
+    return null;
   }
 
   // --- Texts ---------------------------------------------------------------

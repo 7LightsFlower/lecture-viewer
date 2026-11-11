@@ -12,8 +12,12 @@ import 'package:lecture_viewer_v3/core/bootstrap/configure_lecture_tts_audio_ses
 import 'package:lecture_viewer_v3/core/bootstrap/soloud_engine.dart';
 import 'package:lecture_viewer_v3/features/lecture_session/domain/lecture_session_debug.dart';
 
-Uint8List _decodeB64BodyIsolate(String body) {
-  return decodePcmBase64BytesFromHttpBody(body);
+Uint8List _decodeBodyIsolate((String?, Uint8List) args) {
+  final (contentType, bodyBytes) = args;
+  return decodeTtsPcmResponseBody(
+    contentType: contentType,
+    bodyBytes: bodyBytes,
+  );
 }
 
 /// Per-pane TTS: FIFO URL download, PCM append to a preserved SoLoud buffer.
@@ -98,6 +102,8 @@ final class TtsSoloudPaneEngine {
       uri,
       client: _httpClient,
       isCancelled: () => _disposed || epoch != _clearEpoch,
+      // Like KIT's page and LT_ClientApp: public /webapi, no login.
+      usePublicRoute: true,
     );
     if (_disposed || epoch != _clearEpoch) {
       lectureSessionDebugTtsFetch(url: url, outcome: 'cancelled');
@@ -108,17 +114,25 @@ final class TtsSoloudPaneEngine {
       return;
     }
 
-    final body = res.body;
-    if (body.isEmpty) {
+    final bodyBytes = res.bodyBytes;
+    if (bodyBytes.isEmpty) {
       lectureSessionDebugTtsFetch(url: url, outcome: 'empty_body');
       return;
     }
 
+    // Base64 in JSON/text, or raw PCM (see decodeTtsPcmResponseBody).
+    final contentType = res.headers['content-type'];
     final Uint8List decoded;
-    if (body.length > 100000) {
-      decoded = await compute(_decodeB64BodyIsolate, body);
-    } else {
-      decoded = decodePcmBase64BytesFromHttpBody(body);
+    try {
+      decoded = bodyBytes.length > 100000
+          ? await compute(_decodeBodyIsolate, (contentType, bodyBytes))
+          : decodeTtsPcmResponseBody(
+              contentType: contentType,
+              bodyBytes: bodyBytes,
+            );
+    } on FormatException {
+      lectureSessionDebugTtsFetch(url: url, outcome: 'bad_audio_payload');
+      return;
     }
     if (_disposed || epoch != _clearEpoch) return;
 

@@ -177,10 +177,17 @@ void lectureSessionDebugTtsPcm({
   _ttsPcmLogWindowStart = now;
 }
 
+/// TTS URL as fetched (public route), without any embedded login.
+String _ttsUrlForLog(String url) {
+  final uri = Uri.tryParse(url);
+  if (uri == null || uri.scheme == 'data') return _preview(url, 40);
+  return ttsPcmUriForLog(publicTtsPcmUri(uri));
+}
+
 void lectureSessionDebugTtsEnqueue({required String url}) {
   if (!kDebugMode) return;
   debugPrint(
-    '$kLectureSessionDebugTag tts enqueue url=${_preview(url, 100)}',
+    '$kLectureSessionDebugTag tts enqueue url=${_preview(_ttsUrlForLog(url), 100)}',
   );
 }
 
@@ -192,7 +199,7 @@ void lectureSessionDebugTtsFetch({
   if (!kDebugMode) return;
   debugPrint(
     '$kLectureSessionDebugTag tts fetch $outcome '
-    'url=${_preview(url, 80)} '
+    'url=${_preview(_ttsUrlForLog(url), 80)} '
     '${addedSeconds != null ? 'added=${addedSeconds.toStringAsFixed(2)}s' : ''}',
   );
 }

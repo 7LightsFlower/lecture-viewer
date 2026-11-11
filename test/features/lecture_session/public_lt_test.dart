@@ -207,6 +207,9 @@ void main() {
       expect(a.publicTtsUrl('https://u:p@lt2srv.iar.kit.edu/ltapi/stream/data?name=Data/1/2'),
           'https://lt2srv.iar.kit.edu/webapi/stream/data?name=Data/1/2');
       expect(a.adapt({'sender': 'tts:2_de', 'seq': 'TTS-finish'}), isEmpty);
+      expect(a.publicTtsUrl('/ltapi/stream/data?name=Data/1/2'),
+          '$_origin/webapi/stream/data?name=Data/1/2');
+      expect(a.publicTtsUrl('AQIDBA=='), 'data:audio/pcm;base64,AQIDBA==');
     });
 
     test('controll END → session end; other control messages ignored', () {
