@@ -31,11 +31,13 @@ class HomeScreen extends ConsumerWidget {
             : null,
         title: const Text('Lectures'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.link),
-            tooltip: 'Enter link',
-            onPressed: () => showOpenLectureLinkDialog(context),
-          ),
+          // The empty state has its own "Enter link" button.
+          if (saved.isNotEmpty)
+            IconButton(
+              icon: const Icon(Icons.link),
+              tooltip: 'Enter link',
+              onPressed: () => showOpenLectureLinkDialog(context),
+            ),
           IconButton(
             icon: const Icon(Icons.settings),
             onPressed: () => Navigator.of(context).pushNamed('/settings'),

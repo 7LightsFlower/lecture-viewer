@@ -46,7 +46,8 @@ void main() {
   testWidgets('home offers link entry next to QR scan', (tester) async {
     await pumpEmptyHome(tester);
     expect(find.text('Enter link'), findsOneWidget);
-    expect(find.byTooltip('Enter link'), findsOneWidget);
+    // Only the body button; no duplicate in the app bar.
+    expect(find.byTooltip('Enter link'), findsNothing);
 
     await tester.tap(find.text('Enter link'));
     await tester.pumpAndSettle();
@@ -99,6 +100,8 @@ void main() {
     expect(find.text('Saved one'), findsOneWidget);
     expect(find.textContaining('Last join time:'), findsOneWidget);
     expect(find.text('Scan a lecture QR code'), findsNothing);
+    // With saved lectures, link entry lives in the app bar.
+    expect(find.byTooltip('Enter link'), findsOneWidget);
   });
 }
 

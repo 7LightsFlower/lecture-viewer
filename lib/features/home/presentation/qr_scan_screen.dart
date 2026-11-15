@@ -126,10 +126,17 @@ class _QrScanScreenState extends State<QrScanScreen> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         actions: [
-          TextButton.icon(
-            onPressed: _enterLink,
-            icon: const Icon(Icons.link),
-            label: const Text('Enter link'),
+          // While the camera error view is up it carries its own
+          // "Enter link" button; don't show a second one here.
+          ValueListenableBuilder<MobileScannerState>(
+            valueListenable: _controller,
+            builder: (context, state, _) => state.error != null
+                ? const SizedBox.shrink()
+                : TextButton.icon(
+                    onPressed: _enterLink,
+                    icon: const Icon(Icons.link),
+                    label: const Text('Enter link'),
+                  ),
           ),
         ],
       ),
