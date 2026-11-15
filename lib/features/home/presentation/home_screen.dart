@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -20,21 +19,23 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final saved = ref.watch(savedLecturesProvider);
+    final canScan = isQrScannerSupported;
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.qr_code_scanner),
-          tooltip: 'Scan QR',
-          onPressed: () => _openScanner(context),
-        ),
+        leading: canScan
+            ? IconButton(
+                icon: const Icon(Icons.qr_code_scanner),
+                tooltip: 'Scan QR',
+                onPressed: () => _openScanner(context),
+              )
+            : null,
         title: const Text('Lectures'),
         actions: [
-          if (kIsWeb)
-            IconButton(
-              icon: const Icon(Icons.link),
-              tooltip: 'Open link',
-              onPressed: () => showOpenLectureLinkDialog(context),
-            ),
+          IconButton(
+            icon: const Icon(Icons.link),
+            tooltip: 'Enter link',
+            onPressed: () => showOpenLectureLinkDialog(context),
+          ),
           IconButton(
             icon: const Icon(Icons.settings),
             onPressed: () => Navigator.of(context).pushNamed('/settings'),
@@ -42,7 +43,10 @@ class HomeScreen extends ConsumerWidget {
         ],
       ),
       body: saved.isEmpty
-          ? HomeEmptyBody(onScanPressed: () => _openScanner(context))
+          ? HomeEmptyBody(
+              onScanPressed: canScan ? () => _openScanner(context) : null,
+              onEnterLinkPressed: () => showOpenLectureLinkDialog(context),
+            )
           : const SavedLecturesList(),
     );
   }

@@ -3,19 +3,27 @@ import 'package:flutter/material.dart';
 import 'package:lecture_viewer_v3/core/util/open_lecture_session.dart';
 
 /// Asks for a session link (app link, link record, shorten link or meeting
-/// name) and opens it. Used in the browser, where QR scanning is awkward.
-Future<void> showOpenLectureLinkDialog(BuildContext context) async {
+/// name) and opens it. The alternative to scanning a QR code, for devices
+/// without a (working) camera.
+///
+/// Returns true once a session was opened (and has been closed again).
+Future<bool> showOpenLectureLinkDialog(BuildContext context) async {
   final input = await showDialog<String>(
     context: context,
     builder: (_) => const _OpenLinkDialog(),
   );
-  if (input == null || !context.mounted) return;
+  if (input == null || !context.mounted) return false;
   final ok = await openLectureSessionFromUserInput(context, input);
   if (!ok && context.mounted) {
     ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-      const SnackBar(content: Text('Invalid session link')),
+      const SnackBar(
+        content: Text(
+          'This session link is invalid. Please check the link and try again.',
+        ),
+      ),
     );
   }
+  return ok;
 }
 
 class _OpenLinkDialog extends StatefulWidget {
@@ -43,14 +51,14 @@ class _OpenLinkDialogState extends State<_OpenLinkDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Open session'),
+      title: const Text('Enter session link'),
       content: SizedBox(
         width: 480,
         child: TextField(
           controller: _controller,
           autofocus: true,
           decoration: const InputDecoration(
-            hintText: 'Session link or name',
+            hintText: 'Paste the link from the QR code',
             helperText:
                 'lectureviewer.app.link/…, …/mobile/session/<name>, '
                 '…/webapi/shorten/<name> or just <name>',
