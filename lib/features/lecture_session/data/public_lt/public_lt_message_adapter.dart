@@ -236,7 +236,7 @@ class PublicLtMessageAdapter {
             'isShowSpeakerName': state.isShowSpeakerName,
             'beforeSpeaker': state.beforeSpeaker,
           },
-          if (endParagraph != null) 'isEndParagraph': endParagraph,
+          'isEndParagraph': ?endParagraph,
         };
 
     if (segments == null) return [item(text, textId, null)];

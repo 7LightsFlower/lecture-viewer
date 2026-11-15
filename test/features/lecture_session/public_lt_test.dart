@@ -39,7 +39,7 @@ Map<String, dynamic> _seq(
       'seq': seq,
       'unstable': unstable,
       'message_id': id,
-      if (speaker != null) 'speakerName': speaker,
+      'speakerName': ?speaker,
     };
 
 void main() {
