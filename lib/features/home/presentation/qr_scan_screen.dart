@@ -48,7 +48,7 @@ class _QrScanScreenState extends State<QrScanScreen> {
     if (raw == null) return;
     if (_isStillRejected(raw)) return;
     final uri = Uri.tryParse(raw);
-    if (uri == null || !isLectureViewerAppLink(uri)) {
+    if (uri == null || !isLectureJoinLink(uri)) {
       _reject(
         raw,
         'This lecture link is invalid. Please check the link and try again.',

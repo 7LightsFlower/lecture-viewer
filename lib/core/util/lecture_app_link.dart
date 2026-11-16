@@ -10,6 +10,49 @@ bool isLectureViewerAppLink(Uri uri) {
   return linkRecord != null && linkRecord.trim().isNotEmpty;
 }
 
+/// Session name in KIT's public join link `https://<server>/webapi/shorten/<name>`.
+String? kitShortenNameFromUri(Uri uri) {
+  final segments = uri.pathSegments.where((s) => s.isNotEmpty).toList();
+  final i = segments.indexOf('shorten');
+  if (i < 1 || segments[i - 1] != 'webapi' || i + 1 >= segments.length) {
+    return null;
+  }
+  final name = segments[i + 1].trim();
+  return name.isEmpty ? null : name;
+}
+
+/// KIT's own join link (as in KIT's QR codes): works without the app backend.
+bool isKitShortenLink(Uri uri) =>
+    (uri.scheme == 'https' || uri.scheme == 'http') &&
+    uri.host.isNotEmpty &&
+    kitShortenNameFromUri(uri) != null;
+
+/// `link_record` (no scheme) for a KIT join link: `<server>/webapi/shorten/<name>`.
+String? linkRecordFromKitShortenUri(Uri uri) {
+  final name = kitShortenNameFromUri(uri);
+  if (name == null || uri.host.isEmpty) return null;
+  final host = uri.hasPort ? '${uri.host}:${uri.port}' : uri.host;
+  return '$host/webapi/shorten/${Uri.encodeComponent(name)}';
+}
+
+/// A link that opens a session: KIT join link or lectureviewer.app.link.
+bool isLectureJoinLink(Uri uri) =>
+    isKitShortenLink(uri) || isLectureViewerAppLink(uri);
+
+String? linkRecordFromJoinLink(Uri uri) => isKitShortenLink(uri)
+    ? linkRecordFromKitShortenUri(uri)
+    : linkRecordFromAppLinkUri(uri);
+
+/// KIT join link for [linkRecord]: `https://<host>/webapi/shorten/<name>`,
+/// the form shown in the app's join QR code.
+String? kitShortenJoinUrlForLinkRecord(String linkRecord) {
+  final name = meetingNameFromLinkRecord(linkRecord);
+  final uri = Uri.tryParse(resolveSessionUrl(linkRecord));
+  if (name == null || uri == null || uri.host.isEmpty) return null;
+  final host = uri.hasPort ? '${uri.host}:${uri.port}' : uri.host;
+  return 'https://$host/webapi/shorten/${Uri.encodeComponent(name)}';
+}
+
 String? linkRecordFromAppLinkUri(Uri uri) {
   final value = uri.queryParameters['link_record']?.trim();
   if (value == null || value.isEmpty) return null;

@@ -41,7 +41,8 @@ ApiEnvironment apiEnvironmentFromPrefs(String? raw) {
     'production' => ApiEnvironment.production,
     'customOnDeeplink' => ApiEnvironment.customOnDeeplink,
     'kitPublicDirect' => ApiEnvironment.kitPublicDirect,
-    _ => ApiEnvironment.customOnDeeplink,
+    // Default: no app backend, straight from KIT (see kitPublicDirect).
+    _ => ApiEnvironment.kitPublicDirect,
   };
 }
 

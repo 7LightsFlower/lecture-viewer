@@ -60,8 +60,8 @@ class _OpenLinkDialogState extends State<_OpenLinkDialog> {
           decoration: const InputDecoration(
             hintText: 'Paste the link from the QR code',
             helperText:
-                'lectureviewer.app.link/…, …/mobile/session/<name>, '
-                '…/webapi/shorten/<name> or just <name>',
+                'https://<server>/webapi/shorten/<name>, '
+                'a lectureviewer.app.link link, or just <name>',
             helperMaxLines: 2,
             border: OutlineInputBorder(),
           ),

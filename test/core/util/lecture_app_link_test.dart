@@ -158,4 +158,49 @@ void main() {
       );
     });
   });
+
+  group('KIT join link', () {
+    final kit = Uri.parse(
+      'https://lt2srv-backup.iar.kit.edu/webapi/shorten/TestLongSession',
+    );
+
+    test('is recognized as a join link', () {
+      expect(isKitShortenLink(kit), isTrue);
+      expect(isLectureJoinLink(kit), isTrue);
+      expect(kitShortenNameFromUri(kit), 'TestLongSession');
+      expect(
+        isKitShortenLink(Uri.parse('https://x.kit.edu/webapi/shorten/')),
+        isFalse,
+      );
+      expect(
+        isKitShortenLink(Uri.parse('https://x.kit.edu/mobile/session/a')),
+        isFalse,
+      );
+    });
+
+    test('maps to and from a link_record', () {
+      expect(
+        linkRecordFromJoinLink(kit),
+        'lt2srv-backup.iar.kit.edu/webapi/shorten/TestLongSession',
+      );
+      expect(
+        meetingNameFromLinkRecord(linkRecordFromJoinLink(kit)!),
+        'TestLongSession',
+      );
+      expect(
+        kitShortenJoinUrlForLinkRecord('lt2srv.iar.kit.edu/mobile/session/foo'),
+        'https://lt2srv.iar.kit.edu/webapi/shorten/foo',
+      );
+      expect(
+        kitShortenJoinUrlForLinkRecord(linkRecordFromJoinLink(kit)!),
+        kit.toString(),
+      );
+    });
+
+    test('app links still count as join links', () {
+      final app = Uri.parse(kExampleLectureAppLink);
+      expect(isLectureJoinLink(app), isTrue);
+      expect(linkRecordFromJoinLink(app), linkRecordFromAppLinkUri(app));
+    });
+  });
 }

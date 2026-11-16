@@ -52,28 +52,34 @@ Future<int?> _runShortenCheck(
   }
 }
 
-/// Validates a lectureviewer.app.link URL and opens session after shorten check.
+/// Opens a session from a join link after the shorten check: KIT's own
+/// `https://<server>/webapi/shorten/<name>` or a lectureviewer.app.link URL.
 Future<bool> openLectureSessionFromAppLink(
   BuildContext context,
   String appLink,
 ) async {
   final uri = Uri.tryParse(appLink.trim());
-  if (uri == null || !isLectureViewerAppLink(uri)) {
+  if (uri == null || !isLectureJoinLink(uri)) {
     return false;
   }
-  final linkRecord = linkRecordFromAppLinkUri(uri);
+  final linkRecord = linkRecordFromJoinLink(uri);
   if (linkRecord == null) {
     return false;
   }
   return openLectureSessionFromLinkRecord(
     context,
     linkRecord,
-    sessionName: sessionNameFromAppLinkUri(uri),
+    sessionName:
+        isLectureViewerAppLink(uri) ? sessionNameFromAppLinkUri(uri) : null,
     joinUrl: appLink.trim(),
   );
 }
 
 /// Validates [linkRecord], runs shorten check, then opens in-app meeting view.
+///
+/// The join QR always shows KIT's public link for the session
+/// (`https://<host>/webapi/shorten/<name>`, no app backend needed);
+/// [joinUrl] is only used if that can't be built.
 Future<bool> openLectureSessionFromLinkRecord(
   BuildContext context,
   String linkRecord, {
@@ -87,11 +93,11 @@ Future<bool> openLectureSessionFromLinkRecord(
     return false;
   }
 
-  String? resolvedJoinUrl;
-  if (joinUrl != null) {
+  var resolvedJoinUrl = kitShortenJoinUrlForLinkRecord(linkRecord);
+  if (resolvedJoinUrl == null && joinUrl != null) {
     final trimmed = joinUrl.trim();
     final uri = Uri.tryParse(trimmed);
-    if (uri != null && isLectureViewerAppLink(uri)) {
+    if (uri != null && isLectureJoinLink(uri)) {
       resolvedJoinUrl = trimmed;
     }
   }
@@ -161,10 +167,11 @@ Future<bool> openLectureSessionFromLinkRecord(
 }
 
 /// Turns user-supplied text into a `link_record`:
+/// - KIT join link `https://<server>/webapi/shorten/<name>` (kept as is)
 /// - app link `https://lectureviewer.app.link/...?link_record=...`
 /// - link record with or without scheme (`lt2srv.iar.kit.edu/mobile/session/x`)
-/// - public shorten link (`.../webapi/shorten/x`) or a bare meeting name `x`,
-///   both mapped to the production backend's session path.
+/// - a bare meeting name `x` → KIT's public server
+///   (`lecture-translator.kit.edu/webapi/shorten/x`).
 ///
 /// Returns null when nothing usable is found.
 String? linkRecordFromUserInput(String input) {
@@ -172,22 +179,20 @@ String? linkRecordFromUserInput(String input) {
   if (text.isEmpty) return null;
 
   final uri = Uri.tryParse(text);
-  if (uri != null && isLectureViewerAppLink(uri)) {
-    return linkRecordFromAppLinkUri(uri);
+  if (uri != null && isLectureJoinLink(uri)) {
+    return linkRecordFromJoinLink(uri);
   }
 
-  String forName(String name) =>
-      '${Uri.parse(ApiEnvironmentOrigins.production).host}'
-      '/mobile/session/${Uri.encodeComponent(name)}';
-
   if (!text.contains('/')) {
-    return RegExp(r'^[\w.\-]+$').hasMatch(text) ? forName(text) : null;
+    if (!RegExp(r'^[\w.\-]+$').hasMatch(text)) return null;
+    return '${Uri.parse(ApiEnvironmentOrigins.kitPublicDirect).host}'
+        '/webapi/shorten/${Uri.encodeComponent(text)}';
   }
 
   final withoutScheme = text.replaceFirst(RegExp(r'^https?://'), '');
-  final shorten = RegExp(r'/webapi/shorten/([^/?#]+)').firstMatch(withoutScheme);
-  if (shorten != null) {
-    return forName(Uri.decodeComponent(shorten.group(1)!));
+  final asKitLink = Uri.tryParse('https://$withoutScheme');
+  if (asKitLink != null && isKitShortenLink(asKitLink)) {
+    return linkRecordFromKitShortenUri(asKitLink);
   }
   final record = withoutScheme.split(RegExp('[?#]')).first;
   return meetingNameFromLinkRecord(record) == null ? null : record;
@@ -200,7 +205,7 @@ Future<bool> openLectureSessionFromUserInput(
 ) async {
   final trimmed = input.trim();
   final uri = Uri.tryParse(trimmed);
-  if (uri != null && isLectureViewerAppLink(uri)) {
+  if (uri != null && isLectureJoinLink(uri)) {
     return openLectureSessionFromAppLink(context, trimmed);
   }
   final linkRecord = linkRecordFromUserInput(trimmed);

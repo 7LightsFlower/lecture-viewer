@@ -28,16 +28,20 @@ void main() {
       );
     });
 
-    test('shorten link and bare name → production session path', () {
+    test('KIT join link is kept; bare name → KIT public server', () {
       expect(
         linkRecordFromUserInput(
-          'https://lecture-translator.kit.edu/webapi/shorten/foo-lecture',
+          'https://lt2srv-backup.iar.kit.edu/webapi/shorten/TestLongSession',
         ),
-        'lt2srv.iar.kit.edu/mobile/session/foo-lecture',
+        'lt2srv-backup.iar.kit.edu/webapi/shorten/TestLongSession',
+      );
+      expect(
+        linkRecordFromUserInput('lt2srv-backup.iar.kit.edu/webapi/shorten/x'),
+        'lt2srv-backup.iar.kit.edu/webapi/shorten/x',
       );
       expect(
         linkRecordFromUserInput('foo-lecture'),
-        'lt2srv.iar.kit.edu/mobile/session/foo-lecture',
+        'lecture-translator.kit.edu/webapi/shorten/foo-lecture',
       );
     });
 

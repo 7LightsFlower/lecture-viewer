@@ -4,9 +4,9 @@ import 'package:lecture_viewer_v3/core/util/lecture_ws_url.dart';
 
 void main() {
   group('apiEnvironmentFromPrefs', () {
-    test('defaults to customOnDeeplink', () {
-      expect(apiEnvironmentFromPrefs(null), ApiEnvironment.customOnDeeplink);
-      expect(apiEnvironmentFromPrefs('invalid'), ApiEnvironment.customOnDeeplink);
+    test('defaults to kitPublicDirect (no app backend)', () {
+      expect(apiEnvironmentFromPrefs(null), ApiEnvironment.kitPublicDirect);
+      expect(apiEnvironmentFromPrefs('invalid'), ApiEnvironment.kitPublicDirect);
     });
 
     test('reads known prefs values', () {

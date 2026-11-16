@@ -241,7 +241,8 @@ void main() {
     final screen = tester.widget<LectureSessionScreen>(
       find.byType(LectureSessionScreen),
     );
-    expect(screen.scope.joinUrl, joinUrl);
+    // The join QR always shows KIT's public link, not the app link.
+    expect(screen.scope.joinUrl, 'https://lt2srv.iar.kit.edu/webapi/shorten/foo-lecture');
 
     await tester.pageBack();
     await tester.pump();
@@ -294,7 +295,10 @@ void main() {
     );
     await _pumpFrames(tester, count: 15);
 
-    expect(container.read(savedLecturesProvider).single.joinUrl, joinUrl);
+    expect(
+      container.read(savedLecturesProvider).single.joinUrl,
+      'https://lt2srv.iar.kit.edu/webapi/shorten/foo-lecture',
+    );
 
     await tester.pageBack();
     await tester.pump();
@@ -375,7 +379,7 @@ void main() {
     await openFuture;
   });
 
-  testWidgets('hides join QR action when joinUrl is null', (tester) async {
+  testWidgets('shows KIT join QR even without a joinUrl', (tester) async {
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
     late BuildContext harnessContext;
@@ -409,7 +413,11 @@ void main() {
     );
     await _pumpFrames(tester, count: 15);
 
-    expect(find.byTooltip('Show join QR'), findsNothing);
+    expect(find.byTooltip('Show join QR'), findsOneWidget);
+    final screen = tester.widget<LectureSessionScreen>(
+      find.byType(LectureSessionScreen),
+    );
+    expect(screen.scope.joinUrl, 'https://lt2srv.iar.kit.edu/webapi/shorten/foo-lecture');
 
     await tester.pageBack();
     await tester.pump();
