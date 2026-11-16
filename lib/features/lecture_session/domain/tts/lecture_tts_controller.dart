@@ -1,6 +1,7 @@
 import 'package:lecture_common/lecture_common.dart';
 
 import 'package:lecture_viewer_v3/features/lecture_session/domain/tts/tts_soloud_pane_engine.dart';
+import 'package:lecture_viewer_v3/features/lecture_session/domain/tts/tts_spoken_piece.dart';
 
 bool shouldPauseTtsForUserToggle({
   required bool userWantsPlayback,
@@ -9,14 +10,20 @@ bool shouldPauseTtsForUserToggle({
 
 /// Single-pane TTS orchestration for the lecture viewer session.
 final class LectureTtsController {
-  LectureTtsController({required void Function(TtsPaneSnapshot) onSnapshot})
-      : _engine = TtsSoloudPaneEngine(onSnapshot: onSnapshot);
+  LectureTtsController({
+    required void Function(TtsPaneSnapshot) onSnapshot,
+    void Function(TtsSpokenPiece?)? onSpoken,
+  }) : _engine = TtsSoloudPaneEngine(
+          onSnapshot: onSnapshot,
+          onSpoken: onSpoken,
+        );
 
   final TtsSoloudPaneEngine _engine;
 
   bool get userWantsPlayback => _engine.userWantsPlayback;
 
-  void enqueue(String url) => _engine.enqueue(url);
+  void enqueue(String url, {TtsSpokenPiece? spoken}) =>
+      _engine.enqueue(url, spoken: spoken);
 
   Future<void> playPauseFromUser({required bool isPlaying}) async {
     if (shouldPauseTtsForUserToggle(

@@ -6,6 +6,7 @@ import 'package:lecture_common/lecture_common.dart';
 
 import 'package:lecture_viewer_v3/core/providers/app_settings_notifier.dart';
 import 'package:lecture_viewer_v3/features/lecture_session/domain/transcript/lecture_transcript_router.dart';
+import 'package:lecture_viewer_v3/features/lecture_session/domain/tts/tts_spoken_piece.dart';
 import 'package:lecture_viewer_v3/features/lecture_session/presentation/lecture_session_controls.dart';
 import 'package:lecture_viewer_v3/features/lecture_session/presentation/lecture_session_qr_dialog.dart';
 import 'package:lecture_viewer_v3/features/lecture_session/presentation/lecture_session_scope.dart';
@@ -238,10 +239,16 @@ class _LectureSessionTranscriptBody extends ConsumerWidget {
       ),
     );
     final textScale = ref.watch(appSettingsProvider.select((s) => s.textScale));
+    final spoken = ref.watch(
+      lectureSessionProvider(scope).select((s) => s.ttsSpoken),
+    );
+    final highlighted =
+        spoken == null ? null : spokenSegmentIds(activeBucket, spoken);
 
     return Padding(
       padding: const EdgeInsets.all(12),
       child: LectureTranscriptPane(
+        highlightedSegmentIds: highlighted,
         textScaler: TextScaler.linear(textScale),
         activeBucket: activeBucket,
         followScopeKey: transcriptSelection.bucketKey,

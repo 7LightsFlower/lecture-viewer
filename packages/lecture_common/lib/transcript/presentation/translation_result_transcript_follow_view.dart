@@ -15,6 +15,7 @@ class TranslationResultTranscriptFollowView extends StatefulWidget {
     this.followScopeKey,
     this.scrollToBottomIcon = Icons.keyboard_arrow_down,
     this.viewerSpeakerLayout = false,
+    this.highlightedSegmentIds,
   });
 
   final TextScaler textScaler;
@@ -26,6 +27,9 @@ class TranslationResultTranscriptFollowView extends StatefulWidget {
 
   final IconData scrollToBottomIcon;
   final bool viewerSpeakerLayout;
+
+  /// Segments (by `textCompoundId`) to mark, e.g. the text TTS is speaking.
+  final Set<String>? highlightedSegmentIds;
 
   @override
   State<TranslationResultTranscriptFollowView> createState() =>
@@ -159,6 +163,7 @@ class _TranslationResultTranscriptFollowViewState
           activeBucket: widget.activeBucket,
           scrollController: _scrollController,
           viewerSpeakerLayout: widget.viewerSpeakerLayout,
+          highlightedSegmentIds: widget.highlightedSegmentIds,
         ),
         if (_showFab)
           Positioned(

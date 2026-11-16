@@ -13,6 +13,7 @@ class LectureTranscriptPane extends StatelessWidget {
     this.followScopeKey,
     this.moduleLabel,
     this.liveSession = true,
+    this.highlightedSegmentIds,
   });
 
   final TranscriptBucket activeBucket;
@@ -24,6 +25,9 @@ class LectureTranscriptPane extends StatelessWidget {
   final String? followScopeKey;
   final String? moduleLabel;
   final bool liveSession;
+
+  /// Segments to mark (the text TTS is speaking right now).
+  final Set<String>? highlightedSegmentIds;
 
   @override
   Widget build(BuildContext context) {
@@ -63,6 +67,7 @@ class LectureTranscriptPane extends StatelessWidget {
         activeBucket: activeBucket,
         followScopeKey: followScopeKey,
         viewerSpeakerLayout: true,
+        highlightedSegmentIds: highlightedSegmentIds,
       ),
     );
   }

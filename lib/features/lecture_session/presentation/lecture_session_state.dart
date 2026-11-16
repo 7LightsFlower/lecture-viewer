@@ -1,6 +1,7 @@
 import 'package:lecture_common/lecture_common.dart';
 
 import 'package:lecture_viewer_v3/features/lecture_session/data/websocket/lecture_ws_phase.dart';
+import 'package:lecture_viewer_v3/features/lecture_session/domain/tts/tts_spoken_piece.dart';
 
 class LectureSessionState {
   const LectureSessionState({
@@ -18,6 +19,7 @@ class LectureSessionState {
     this.serverErrorRetryRequested = false,
     this.ttsCollapsedSliderVisible = false,
     this.inboundSessionId,
+    this.ttsSpoken,
   });
 
   final String sessionId;
@@ -37,6 +39,9 @@ class LectureSessionState {
   /// `sessionID` from websocket `info` message — used for share / cached-text API.
   final String? inboundSessionId;
 
+  /// The TTS chunk being played right now (for highlighting its text).
+  final TtsSpokenPiece? ttsSpoken;
+
   String get apiSessionId => inboundSessionId ?? sessionId;
 
   LectureSessionState copyWith({
@@ -53,6 +58,8 @@ class LectureSessionState {
     bool? serverErrorRetryRequested,
     bool? ttsCollapsedSliderVisible,
     String? inboundSessionId,
+    TtsSpokenPiece? ttsSpoken,
+    bool clearTtsSpoken = false,
     bool clearError = false,
   }) {
     return LectureSessionState(
@@ -73,6 +80,7 @@ class LectureSessionState {
       ttsCollapsedSliderVisible:
           ttsCollapsedSliderVisible ?? this.ttsCollapsedSliderVisible,
       inboundSessionId: inboundSessionId ?? this.inboundSessionId,
+      ttsSpoken: clearTtsSpoken ? null : (ttsSpoken ?? this.ttsSpoken),
     );
   }
 }

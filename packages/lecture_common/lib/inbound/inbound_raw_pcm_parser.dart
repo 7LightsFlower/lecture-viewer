@@ -26,5 +26,18 @@ TtsPcmEvent? parseInboundRawPcmPayload(Map<String, dynamic> decoded) {
     index: data['index'] is int ? data['index'] as int : null,
     languageFromPayload: lang,
     lt2srvSessionId: parseLt2srvSessionIdFromPcmUrl(url),
+    text: switch (data['text']) {
+      final String t when t.trim().isNotEmpty => t,
+      _ => null,
+    },
+    minMessageId: _intOrNull(data['minMessageId']),
+    maxMessageId: _intOrNull(data['maxMessageId']),
   );
 }
+
+int? _intOrNull(Object? v) => switch (v) {
+      final int i => i,
+      final num n => n.toInt(),
+      final String s => int.tryParse(s.trim()),
+      _ => null,
+    };

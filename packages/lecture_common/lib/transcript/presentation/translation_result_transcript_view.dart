@@ -12,12 +12,16 @@ class TranslationResultTranscriptView extends StatelessWidget {
     required this.activeBucket,
     this.scrollController,
     this.viewerSpeakerLayout = false,
+    this.highlightedSegmentIds,
   });
 
   final TextScaler textScaler;
   final TranscriptBucket activeBucket;
   final ScrollController? scrollController;
   final bool viewerSpeakerLayout;
+
+  /// Segments (by `textCompoundId`) to mark, e.g. the text TTS is speaking.
+  final Set<String>? highlightedSegmentIds;
 
   @override
   Widget build(BuildContext context) {
@@ -31,6 +35,10 @@ class TranslationResultTranscriptView extends StatelessWidget {
         : Colors.grey.shade500;
     final partialStyle = theme.textTheme.bodyLarge?.copyWith(
       color: partialColor,
+    );
+    final highlightStyle = TextStyle(
+      backgroundColor: theme.colorScheme.primaryContainer,
+      color: theme.colorScheme.onPrimaryContainer,
     );
     final lineHeight = TranscriptInlineFormat.oneLineHeight(bodyStyle);
     final bottomBlankHeight = lineHeight * 2;
@@ -62,6 +70,8 @@ class TranslationResultTranscriptView extends StatelessWidget {
           partialStyle: partialStyle,
           paragraphIndex: index,
           viewerSpeakerLayout: viewerSpeakerLayout,
+          highlightedSegmentIds: highlightedSegmentIds,
+          highlightStyle: highlightStyle,
         );
         return Padding(
           key: ValueKey<String>('p-$index'),

@@ -24,6 +24,8 @@ class TranscriptInlineFormat {
     TextStyle? partialStyle,
     int paragraphIndex = 0,
     bool viewerSpeakerLayout = false,
+    Set<String>? highlightedSegmentIds,
+    TextStyle? highlightStyle,
   }) {
     final spans = <InlineSpan>[];
     var lastSegmentTextForGap = '';
@@ -64,7 +66,16 @@ class TranscriptInlineFormat {
           needsInsertedSpaceBetween(lastSegmentTextForGap, t)) {
         spans.add(TextSpan(text: ' ', style: bodyStyle));
       }
-      spans.add(TextSpan(text: t, style: bodyStyle));
+      final highlighted =
+          highlightedSegmentIds?.contains(segment.textCompoundId) ?? false;
+      spans.add(
+        TextSpan(
+          text: t,
+          style: highlighted
+              ? (bodyStyle ?? const TextStyle()).merge(highlightStyle)
+              : bodyStyle,
+        ),
+      );
       lastSegmentTextForGap = t;
     }
 

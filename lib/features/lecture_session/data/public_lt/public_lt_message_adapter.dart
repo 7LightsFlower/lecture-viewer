@@ -150,6 +150,13 @@ class PublicLtMessageAdapter {
         'rawSender': rawSender,
         'senderDetail': info?.toJson(),
         'url': url,
+        // What the chunk says, for highlighting it in the transcript.
+        if ((raw['text'] ?? '').toString().trim().isNotEmpty)
+          'text': raw['text'].toString(),
+        if (raw['min_message_id'] != null)
+          'minMessageId': int.tryParse('${raw['min_message_id']}'),
+        if (raw['max_message_id'] != null)
+          'maxMessageId': int.tryParse('${raw['max_message_id']}'),
       },
     );
   }

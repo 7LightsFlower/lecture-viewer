@@ -207,6 +207,18 @@ void main() {
       expect(a.publicTtsUrl('https://u:p@lt2srv.iar.kit.edu/ltapi/stream/data?name=Data/1/2'),
           'https://lt2srv.iar.kit.edu/webapi/stream/data?name=Data/1/2');
       expect(a.adapt({'sender': 'tts:2_de', 'seq': 'TTS-finish'}), isEmpty);
+
+      final withText = parseLectureInbound(a.adapt({
+        'sender': 'tts:2_de',
+        'message_id': 13,
+        'b64_enc_pcm_s16le': 'Data/277216/13',
+        'text': 'Hallo Welt.',
+        'min_message_id': 9,
+        'max_message_id': 9,
+      }).single) as LectureInboundTtsPcm;
+      expect(withText.event.text, 'Hallo Welt.');
+      expect(withText.event.minMessageId, 9);
+      expect(withText.event.maxMessageId, 9);
       expect(a.publicTtsUrl('/ltapi/stream/data?name=Data/1/2'),
           '$_origin/webapi/stream/data?name=Data/1/2');
       expect(a.publicTtsUrl('AQIDBA=='), 'data:audio/pcm;base64,AQIDBA==');

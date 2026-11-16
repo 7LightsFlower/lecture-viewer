@@ -29,4 +29,24 @@ void main() {
     ) as Map<String, dynamic>;
     expect(parseInboundRawPcmPayload(decoded), isNull);
   });
+
+  test('parses spoken text and message ids when sent', () {
+    final decoded = jsonDecode('''
+{"objectType":"raw_pcm","data":{"url":"https://x/pcm","rawSender":"tts:3_de","language":"German","text":"Hallo Welt.","minMessageId":"12","maxMessageId":14}}
+''') as Map<String, dynamic>;
+    final event = parseInboundRawPcmPayload(decoded)!;
+    expect(event.text, 'Hallo Welt.');
+    expect(event.minMessageId, 12);
+    expect(event.maxMessageId, 14);
+  });
+
+  test('spoken fields are null when absent', () {
+    final decoded = jsonDecode(
+      '{"objectType":"raw_pcm","data":{"url":"https://x","rawSender":"tts:0","text":"  "}}',
+    ) as Map<String, dynamic>;
+    final event = parseInboundRawPcmPayload(decoded)!;
+    expect(event.text, isNull);
+    expect(event.minMessageId, isNull);
+    expect(event.maxMessageId, isNull);
+  });
 }

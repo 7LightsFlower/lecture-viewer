@@ -16,6 +16,7 @@ import 'package:lecture_viewer_v3/features/lecture_session/domain/tts/lecture_tt
 import 'package:lecture_viewer_v3/features/lecture_session/domain/tts/tts_collapsed_slider_gate.dart';
 import 'package:lecture_viewer_v3/features/lecture_session/domain/tts/tts_language_change.dart';
 import 'package:lecture_viewer_v3/features/lecture_session/domain/tts/tts_media_seek.dart';
+import 'package:lecture_viewer_v3/features/lecture_session/domain/tts/tts_spoken_piece.dart';
 import 'package:lecture_viewer_v3/features/lecture_session/data/lecture_session_transport.dart';
 import 'package:lecture_viewer_v3/features/lecture_session/data/public_lt/public_lt_session_client.dart';
 import 'package:lecture_viewer_v3/features/lecture_session/data/websocket/lecture_session_websocket_client.dart';
@@ -288,6 +289,11 @@ class LectureSessionNotifier extends AutoDisposeFamilyNotifier<LectureSessionSta
         state = state.copyWith(tts: snap);
         _syncTtsMedia(snap);
       },
+      onSpoken: (piece) {
+        state = piece == null
+            ? state.copyWith(clearTtsSpoken: true)
+            : state.copyWith(ttsSpoken: piece);
+      },
     );
   }
 
@@ -377,7 +383,7 @@ class LectureSessionNotifier extends AutoDisposeFamilyNotifier<LectureSessionSta
       enqueued: true,
     );
     lectureSessionDebugTtsEnqueue(url: event.url);
-    _ensureTts().enqueue(event.url);
+    _ensureTts().enqueue(event.url, spoken: TtsSpokenPiece.fromEvent(event));
   }
 
   void engageTtsCollapsedSlider() {

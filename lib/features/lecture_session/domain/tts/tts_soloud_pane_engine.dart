@@ -11,6 +11,7 @@ import 'package:lecture_common/lecture_common.dart';
 import 'package:lecture_viewer_v3/core/bootstrap/configure_lecture_tts_audio_session.dart';
 import 'package:lecture_viewer_v3/core/bootstrap/soloud_engine.dart';
 import 'package:lecture_viewer_v3/features/lecture_session/domain/lecture_session_debug.dart';
+import 'package:lecture_viewer_v3/features/lecture_session/domain/tts/tts_spoken_piece.dart';
 
 Uint8List _decodeBodyIsolate((String?, Uint8List) args) {
   final (contentType, bodyBytes) = args;
@@ -20,13 +21,25 @@ Uint8List _decodeBodyIsolate((String?, Uint8List) args) {
   );
 }
 
+/// Where one appended chunk sits in the audio stream.
+typedef _ChunkSpan = ({double startSec, double endSec, TtsSpokenPiece piece});
+
 /// Per-pane TTS: FIFO URL download, PCM append to a preserved SoLoud buffer.
 final class TtsSoloudPaneEngine {
-  TtsSoloudPaneEngine({required void Function(TtsPaneSnapshot) onSnapshot})
-    : _onSnapshot = onSnapshot;
+  TtsSoloudPaneEngine({
+    required void Function(TtsPaneSnapshot) onSnapshot,
+    void Function(TtsSpokenPiece?)? onSpoken,
+  })  : _onSnapshot = onSnapshot,
+        _onSpoken = onSpoken;
 
   final void Function(TtsPaneSnapshot) _onSnapshot;
-  final Queue<String> _queue = Queue<String>();
+  final void Function(TtsSpokenPiece?)? _onSpoken;
+  final Queue<(String, TtsSpokenPiece?)> _queue =
+      Queue<(String, TtsSpokenPiece?)>();
+
+  /// Appended chunks with text, in stream order (for the spoken highlight).
+  final List<_ChunkSpan> _chunks = [];
+  TtsSpokenPiece? _lastSpoken;
 
   bool _disposed = false;
   int _clearEpoch = 0;
@@ -60,13 +73,61 @@ final class TtsSoloudPaneEngine {
     );
   }
 
-  void _emit() => _onSnapshot(_snapshot());
+  void _emit() {
+    _onSnapshot(_snapshot());
+    _emitSpokenIfChanged();
+  }
 
-  void enqueue(String url) {
+  /// The piece at the playhead while audio is being played.
+  TtsSpokenPiece? get currentSpoken {
+    if (_handle == null || _chunks.isEmpty) return null;
+    final pos = _playbackPositionSec;
+    // Binary search: last chunk starting at or before the playhead.
+    var lo = 0, hi = _chunks.length - 1, found = -1;
+    while (lo <= hi) {
+      final mid = (lo + hi) >> 1;
+      if (_chunks[mid].startSec <= pos) {
+        found = mid;
+        lo = mid + 1;
+      } else {
+        hi = mid - 1;
+      }
+    }
+    if (found < 0) return null;
+    final c = _chunks[found];
+    return pos < c.endSec ? c.piece : null;
+  }
+
+  void _emitSpokenIfChanged() {
+    final cur = currentSpoken;
+    if (identical(cur, _lastSpoken)) return;
+    _lastSpoken = cur;
+    _onSpoken?.call(cur);
+  }
+
+  void enqueue(String url, {TtsSpokenPiece? spoken}) {
     if (_disposed) return;
-    _queue.addLast(url);
+    _queue.addLast((url, spoken));
     _emit();
     unawaited(_drainQueue());
+  }
+
+  /// KIT names only the last text message of a chunk (min = max), but a
+  /// chunk speaks everything since the previous one of the same stream.
+  TtsSpokenPiece _withRangeFromPrevious(TtsSpokenPiece piece) {
+    final maxId = piece.maxId;
+    if (maxId == null) return piece;
+    int? prevMax;
+    for (final c in _chunks.reversed) {
+      final m = c.piece.maxId;
+      if (c.piece.textSender == piece.textSender && m != null && m < maxId) {
+        prevMax = m;
+        break;
+      }
+    }
+    if (prevMax == null || prevMax + 1 > maxId) return piece;
+    final lo = piece.minId;
+    return lo == null || lo > prevMax + 1 ? piece.withMinId(prevMax + 1) : piece;
   }
 
   Future<void> _drainQueue() async {
@@ -74,11 +135,11 @@ final class TtsSoloudPaneEngine {
     _draining = true;
     try {
       while (_queue.isNotEmpty && !_disposed) {
-        final url = _queue.removeFirst();
+        final (url, spoken) = _queue.removeFirst();
         _inFlightDownloads++;
         _emit();
         try {
-          await _fetchDecodeAppend(url);
+          await _fetchDecodeAppend(url, spoken);
         } finally {
           _inFlightDownloads--;
           _emit();
@@ -89,7 +150,7 @@ final class TtsSoloudPaneEngine {
     }
   }
 
-  Future<void> _fetchDecodeAppend(String url) async {
+  Future<void> _fetchDecodeAppend(String url, TtsSpokenPiece? spoken) async {
     final epoch = _clearEpoch;
     if (_disposed) return;
     final uri = Uri.tryParse(url);
@@ -165,6 +226,13 @@ final class TtsSoloudPaneEngine {
     );
 
     SoLoud.instance.addAudioDataStream(_source!, pcm);
+    if (spoken != null) {
+      _chunks.add((
+        startSec: _bufferedDurationSec,
+        endSec: _bufferedDurationSec + seconds,
+        piece: _withRangeFromPrevious(spoken),
+      ));
+    }
     _bufferedDurationSec += seconds;
     _bufferGeneration++;
     lectureSessionDebugTtsFetch(
@@ -456,6 +524,7 @@ final class TtsSoloudPaneEngine {
       _userWantsPlayback = false;
     }
     _queue.clear();
+    _chunks.clear();
     await _stopVoiceAndSource();
     _bufferedDurationSec = 0;
     _playbackPositionSec = 0;
