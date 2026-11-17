@@ -49,3 +49,8 @@ app.*.map.json
 /android/build/
 
 /android/build/
+
+# Signing keys and credentials (were in the old repo's top-level .gitignore)
+*.jks
+*.keystore
+key.properties

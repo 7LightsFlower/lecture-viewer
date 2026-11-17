@@ -363,7 +363,7 @@ packages:
   lecture_common:
     dependency: "direct main"
     description:
-      path: "../common"
+      path: "packages/lecture_common"
       relative: true
     source: path
     version: "0.1.0"
